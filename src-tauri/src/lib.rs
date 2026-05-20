@@ -1,6 +1,8 @@
 //! Hermes Launcher Tauri backend. Logic lives in plain modules so it is
 //! testable with `cargo test` (no webview / Tauri runtime needed).
 
+pub mod events;
+
 /// Entry point. The real Tauri context + frontend are wired under the `app`
 /// feature (Plan 4); a backend-only build is a no-op so `cargo test`/`build`
 /// work on any platform without the frontend assets.
