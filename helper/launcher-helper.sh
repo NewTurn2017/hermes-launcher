@@ -143,6 +143,40 @@ cmd_slack_manifest() {
   emit event=slack_manifest json="$json"
 }
 
+# Parse a Slack auth.test JSON body from stdin into a TSV line: status\tteam\tuser
+# Uses `python3 -c` (not a heredoc) so piped stdin reaches sys.stdin.
+parse_slack_auth() {
+  python3 -c '
+import sys, json
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print("parse_error\t\t"); sys.exit(0)
+if d.get("ok"):
+    print("ok\t%s\t%s" % (d.get("team", ""), d.get("user", "")))
+else:
+    print("%s\t\t" % d.get("error", "unknown"))
+'
+}
+
+cmd_slack_verify() {
+  local bot="${1:-}"
+  if [ -z "$bot" ]; then die slack-verify recoverable "missing bot token argument"; fi
+  case "$bot" in
+    xoxb-*) : ;;
+    *) emit event=slack_error detail="bot token must start with xoxb-"; return 0 ;;
+  esac
+  local resp status team user line
+  resp="$(curl -fsS -H "Authorization: Bearer $bot" "$LAUNCHER_SLACK_API/auth.test" 2>/dev/null || true)"
+  line="$(printf '%s' "$resp" | parse_slack_auth)"
+  IFS=$'\t' read -r status team user <<<"$line"
+  if [ "$status" = "ok" ]; then
+    emit event=slack_verified workspace="$team" bot="$user"
+  else
+    emit event=slack_error detail="$status"
+  fi
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
@@ -151,6 +185,7 @@ main() {
     install-hermes) cmd_install_hermes "$@" ;;
     codex-login)    cmd_codex_login "$@" ;;
     slack-manifest) cmd_slack_manifest "$@" ;;
+    slack-verify)   cmd_slack_verify "$@" ;;
     ""|-h|--help)   usage; exit 2 ;;
     *)              usage; exit 2 ;;
   esac
