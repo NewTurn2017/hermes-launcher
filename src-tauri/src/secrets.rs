@@ -64,12 +64,17 @@ mod tests {
     }
     impl MemoryStore {
         fn new() -> Self {
-            MemoryStore { inner: Mutex::new(HashMap::new()) }
+            MemoryStore {
+                inner: Mutex::new(HashMap::new()),
+            }
         }
     }
     impl SecretStore for MemoryStore {
         fn store(&self, key: &str, value: &str) -> Result<(), String> {
-            self.inner.lock().unwrap().insert(key.to_string(), value.to_string());
+            self.inner
+                .lock()
+                .unwrap()
+                .insert(key.to_string(), value.to_string());
             Ok(())
         }
         fn retrieve(&self, key: &str) -> Result<Option<String>, String> {

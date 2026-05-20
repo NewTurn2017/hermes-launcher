@@ -64,8 +64,21 @@ mod tests {
         let mut got = Vec::new();
         let n = stream_events(Cursor::new(input), |ev| got.push(ev)).unwrap();
         assert_eq!(n, 2);
-        assert_eq!(got[0], HelperEvent::Step { step: Step::Detect, progress: 0, msg: "x".into() });
-        assert_eq!(got[1], HelperEvent::Done { step: Step::Detect, ok: true });
+        assert_eq!(
+            got[0],
+            HelperEvent::Step {
+                step: Step::Detect,
+                progress: 0,
+                msg: "x".into()
+            }
+        );
+        assert_eq!(
+            got[1],
+            HelperEvent::Done {
+                step: Step::Detect,
+                ok: true
+            }
+        );
     }
 
     #[test]

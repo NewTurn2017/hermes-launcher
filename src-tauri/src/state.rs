@@ -22,7 +22,11 @@ pub struct WizardState {
 
 impl Default for WizardState {
     fn default() -> Self {
-        WizardState { schema: 1, wsl_distro: None, steps: BTreeMap::new() }
+        WizardState {
+            schema: 1,
+            wsl_distro: None,
+            steps: BTreeMap::new(),
+        }
     }
 }
 
@@ -47,7 +51,10 @@ impl WizardState {
     }
 
     pub fn is_complete(&self, step: &str) -> bool {
-        matches!(self.steps.get(step), Some(StepStatus::Ok) | Some(StepStatus::Skipped))
+        matches!(
+            self.steps.get(step),
+            Some(StepStatus::Ok) | Some(StepStatus::Skipped)
+        )
     }
 }
 
@@ -73,8 +80,11 @@ mod tests {
     fn save_then_load_round_trips() {
         let dir = std::env::temp_dir().join(format!("hl-state-{}", std::process::id()));
         let path = dir.join("state.json");
-        let mut s = WizardState::default();
-        s.wsl_distro = Some("Ubuntu-24.04".into());
+        let mut s = WizardState {
+            schema: 1,
+            wsl_distro: Some("Ubuntu-24.04".into()),
+            steps: BTreeMap::new(),
+        };
         s.set_step("env", StepStatus::Ok);
         s.set_step("install", StepStatus::Ok);
         s.set_step("codex", StepStatus::Pending);
