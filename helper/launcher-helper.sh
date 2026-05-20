@@ -134,6 +134,15 @@ cmd_codex_login() {
   return 0
 }
 
+cmd_slack_manifest() {
+  emit event=step step=slack-manifest progress:=0 msg="generating slack manifest"
+  local json
+  if ! json="$(hermes slack manifest 2>/dev/null)"; then
+    die slack-manifest recoverable "hermes slack manifest failed"
+  fi
+  emit event=slack_manifest json="$json"
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
@@ -141,6 +150,7 @@ main() {
     detect)         cmd_detect "$@" ;;
     install-hermes) cmd_install_hermes "$@" ;;
     codex-login)    cmd_codex_login "$@" ;;
+    slack-manifest) cmd_slack_manifest "$@" ;;
     ""|-h|--help)   usage; exit 2 ;;
     *)              usage; exit 2 ;;
   esac
