@@ -2,6 +2,7 @@
 //! testable with `cargo test` (no webview / Tauri runtime needed).
 
 pub mod events;
+pub mod state;
 
 /// Entry point. The real Tauri context + frontend are wired under the `app`
 /// feature (Plan 4); a backend-only build is a no-op so `cargo test`/`build`
