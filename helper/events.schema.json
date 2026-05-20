@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "hermes-launcher/helper/events.schema.json",
+  "$id": "https://github.com/NewTurn2017/hermes-launcher/blob/main/helper/events.schema.json",
   "title": "Hermes Launcher helper event",
   "description": "One JSON object per line emitted by launcher-helper.sh on stdout.",
   "type": "object",
