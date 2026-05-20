@@ -1,0 +1,26 @@
+name: helper
+
+on:
+  push:
+    paths:
+      - "helper/**"
+      - ".github/workflows/helper.yml"
+  pull_request:
+    paths:
+      - "helper/**"
+      - ".github/workflows/helper.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats, shellcheck, jsonschema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats shellcheck python3-pip
+          python3 -m pip install --user jsonschema
+      - name: shellcheck
+        run: shellcheck -x helper/launcher-helper.sh helper/tests/stubs/* helper/tests/fixtures/install-*.sh
+      - name: bats
+        run: bats helper/tests/

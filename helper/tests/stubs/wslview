@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Stub WSL browser opener: accept a URL, do nothing, succeed.
+exit 0

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Stub hermes CLI.
+#   hermes --version
+#   hermes slack manifest        -> prints a manifest JSON
+#   hermes config set KEY VALUE  -> echoes, exit 0
+#   STUB_HERMES_MANIFEST_FAIL=1  -> `slack manifest` exits 1
+set -u
+sub="${1:-}"
+shift || true
+case "$sub" in
+  --version) echo "hermes 1.2.3-stub"; exit 0 ;;
+  slack)
+    if [ "${1:-}" = "manifest" ]; then
+      if [ "${STUB_HERMES_MANIFEST_FAIL:-0}" = "1" ]; then echo "manifest error" >&2; exit 1; fi
+      printf '%s' '{"display_information":{"name":"hermes"},"settings":{"socket_mode_enabled":true}}'
+      exit 0
+    fi ;;
+  config)
+    if [ "${1:-}" = "set" ]; then echo "set ${2:-} = ${3:-}"; exit 0; fi ;;
+esac
+exit 0
