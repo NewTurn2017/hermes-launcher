@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hermes-launcher/helper/events.schema.json",
+  "title": "Hermes Launcher helper event",
+  "description": "One JSON object per line emitted by launcher-helper.sh on stdout.",
+  "type": "object",
+  "required": ["event"],
+  "oneOf": [
+    {
+      "properties": {
+        "event": { "const": "step" },
+        "step": { "$ref": "#/$defs/step" },
+        "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "msg": { "type": "string" }
+      },
+      "required": ["event", "step", "progress", "msg"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "detect" },
+        "internet": { "type": "boolean" },
+        "python3": { "type": "boolean" },
+        "wslview": { "type": "boolean" },
+        "cmd_exe": { "type": "boolean" },
+        "hermes_installed": { "type": "boolean" },
+        "codex_installed": { "type": "boolean" },
+        "codex_authed": { "type": "boolean" }
+      },
+      "required": ["event", "internet", "python3", "wslview", "cmd_exe", "hermes_installed", "codex_installed", "codex_authed"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "codex_authed" },
+        "email": { "type": ["string", "null"] }
+      },
+      "required": ["event"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "codex_error" },
+        "detail": { "type": "string" }
+      },
+      "required": ["event", "detail"],
+      "additionalProperties": false
+    },
+    {
+      "properties": { "event": { "const": "codex_aborted" } },
+      "required": ["event"],
+      "additionalProperties": false
+    },
+    {
+      "properties": { "event": { "const": "codex_timeout" } },
+      "required": ["event"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "slack_manifest" },
+        "json": { "type": "string" }
+      },
+      "required": ["event", "json"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "slack_verified" },
+        "workspace": { "type": "string" },
+        "bot": { "type": "string" }
+      },
+      "required": ["event", "workspace", "bot"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "slack_error" },
+        "detail": { "type": "string" }
+      },
+      "required": ["event", "detail"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "done" },
+        "step": { "$ref": "#/$defs/step" },
+        "ok": { "type": "boolean" }
+      },
+      "required": ["event", "step", "ok"],
+      "additionalProperties": false
+    },
+    {
+      "properties": {
+        "event": { "const": "error" },
+        "step": { "$ref": "#/$defs/step" },
+        "level": { "enum": ["recoverable", "environment", "fatal"] },
+        "detail": { "type": "string" }
+      },
+      "required": ["event", "step", "level", "detail"],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "step": {
+      "enum": ["detect", "install-hermes", "codex-login", "slack-manifest", "slack-verify", "write-config", "verify"]
+    }
+  }
+}
