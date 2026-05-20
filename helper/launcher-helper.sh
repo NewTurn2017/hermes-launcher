@@ -46,10 +46,25 @@ subcommands:
 EOF
 }
 
+cmd_detect() {
+  local internet=false wslview=false cmd_exe=false
+  local hermes_installed=false codex_installed=false codex_authed=false
+  if curl -fsS --max-time 5 "$LAUNCHER_NET_CHECK_URL" >/dev/null 2>&1; then internet=true; fi
+  if command -v wslview >/dev/null 2>&1; then wslview=true; fi
+  if command -v cmd.exe >/dev/null 2>&1; then cmd_exe=true; fi
+  if command -v hermes >/dev/null 2>&1 || [ -d "$HERMES_HOME/hermes-agent" ]; then hermes_installed=true; fi
+  if command -v codex >/dev/null 2>&1; then codex_installed=true; fi
+  if [ -f "$CODEX_HOME/auth.json" ]; then codex_authed=true; fi
+  emit event=detect \
+    internet:="$internet" python3:=true wslview:="$wslview" cmd_exe:="$cmd_exe" \
+    hermes_installed:="$hermes_installed" codex_installed:="$codex_installed" codex_authed:="$codex_authed"
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
   case "$cmd" in
+    detect)       cmd_detect "$@" ;;
     ""|-h|--help) usage; exit 2 ;;
     *)            usage; exit 2 ;;
   esac
