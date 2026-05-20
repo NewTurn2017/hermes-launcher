@@ -92,12 +92,55 @@ cmd_install_hermes() {
   emit event=done step=install-hermes ok:=true
 }
 
+# Print a JSON value for the codex account email, or `null`.
+codex_email() {
+  local out email
+  out="$(codex login status 2>/dev/null || true)"
+  email="$(printf '%s' "$out" | grep -oE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]+' | head -n1 || true)"
+  if [ -n "$email" ]; then printf '"%s"' "$email"; else printf 'null'; fi
+}
+
+cmd_codex_login() {
+  emit event=step step=codex-login progress:=0 msg="starting codex login"
+  if [ -f "$CODEX_HOME/auth.json" ]; then
+    emit event=codex_authed email:="$(codex_email)"
+    return 0
+  fi
+  codex login >/dev/null 2>"$HERMES_HOME/codex-login.err" &
+  local pid=$! waited=0 crc=0
+  while [ "$waited" -lt "$LAUNCHER_CODEX_TIMEOUT" ]; do
+    if [ -f "$CODEX_HOME/auth.json" ]; then
+      kill "$pid" 2>/dev/null || true
+      emit event=codex_authed email:="$(codex_email)"
+      return 0
+    fi
+    if ! kill -0 "$pid" 2>/dev/null; then
+      crc=0
+      wait "$pid" 2>/dev/null || crc=$?
+      if [ -f "$CODEX_HOME/auth.json" ]; then
+        emit event=codex_authed email:="$(codex_email)"; return 0
+      fi
+      if [ "$crc" -eq 130 ]; then emit event=codex_aborted; return 0; fi
+      local detail
+      detail="$(tr -d '\r\n' < "$HERMES_HOME/codex-login.err" 2>/dev/null || true)"
+      emit event=codex_error detail="${detail:-codex login exited with code $crc}"
+      return 0
+    fi
+    sleep "$LAUNCHER_POLL_INTERVAL"
+    waited=$((waited + LAUNCHER_POLL_INTERVAL))
+  done
+  kill "$pid" 2>/dev/null || true
+  emit event=codex_timeout
+  return 0
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
   case "$cmd" in
     detect)         cmd_detect "$@" ;;
     install-hermes) cmd_install_hermes "$@" ;;
+    codex-login)    cmd_codex_login "$@" ;;
     ""|-h|--help)   usage; exit 2 ;;
     *)              usage; exit 2 ;;
   esac
