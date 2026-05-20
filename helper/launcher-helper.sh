@@ -177,6 +177,31 @@ cmd_slack_verify() {
   fi
 }
 
+upsert_env() { python3 "$HELPER_DIR/lib/upsert_env.py" "$1" "$2" "$3"; }
+
+cmd_write_config() {
+  local bot="" app="" set_codex=false
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --slack-bot) bot="${2:-}"; shift 2 ;;
+      --slack-app) app="${2:-}"; shift 2 ;;
+      --codex)     set_codex=true; shift ;;
+      *)           die write-config recoverable "unknown arg: $1" ;;
+    esac
+  done
+  mkdir -p "$HERMES_HOME"
+  local envf="$HERMES_HOME/.env"
+  [ -f "$envf" ] || : > "$envf"
+  [ -n "$bot" ] && upsert_env "$envf" SLACK_BOT_TOKEN "$bot"
+  [ -n "$app" ] && upsert_env "$envf" SLACK_APP_TOKEN "$app"
+  if [ "$set_codex" = true ]; then
+    if ! hermes config set model.provider "$LAUNCHER_CODEX_PROVIDER" >/dev/null 2>&1; then
+      die write-config recoverable "hermes config set model.provider failed"
+    fi
+  fi
+  emit event=done step=write-config ok:=true
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
@@ -186,6 +211,7 @@ main() {
     codex-login)    cmd_codex_login "$@" ;;
     slack-manifest) cmd_slack_manifest "$@" ;;
     slack-verify)   cmd_slack_verify "$@" ;;
+    write-config)   cmd_write_config "$@" ;;
     ""|-h|--help)   usage; exit 2 ;;
     *)              usage; exit 2 ;;
   esac
