@@ -3,6 +3,7 @@
 
 pub mod events;
 pub mod state;
+pub mod wsl;
 
 /// Entry point. The real Tauri context + frontend are wired under the `app`
 /// feature (Plan 4); a backend-only build is a no-op so `cargo test`/`build`
