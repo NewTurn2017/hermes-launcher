@@ -60,13 +60,46 @@ cmd_detect() {
     hermes_installed:="$hermes_installed" codex_installed:="$codex_installed" codex_authed:="$codex_authed"
 }
 
+# Map one line of install.sh stdout to a progress event (unknown lines ignored).
+map_install_line() {
+  case "$1" in
+    *"Installing uv"*)              emit event=step step=install-hermes progress:=15 msg="installing uv" ;;
+    *"Cloning"*|*"git clone"*)      emit event=step step=install-hermes progress:=35 msg="cloning hermes-agent" ;;
+    *"virtual environment"*)        emit event=step step=install-hermes progress:=55 msg="creating venv" ;;
+    *"Installing package"*)         emit event=step step=install-hermes progress:=70 msg="installing package" ;;
+    *"config.yaml from template"*)  emit event=step step=install-hermes progress:=85 msg="writing config" ;;
+    *"Installation Complete"*)      emit event=step step=install-hermes progress:=100 msg="installation complete" ;;
+  esac
+}
+
+cmd_install_hermes() {
+  emit event=step step=install-hermes progress:=0 msg="starting installer"
+  local tmp
+  tmp="$(mktemp)"
+  if ! curl -fsSL "$HERMES_INSTALL_URL" -o "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    die install-hermes environment "failed to download install.sh from $HERMES_INSTALL_URL"
+  fi
+  local rc=0
+  set +e
+  bash "$tmp" 2>&1 | while IFS= read -r line; do map_install_line "$line"; done
+  rc=${PIPESTATUS[0]}
+  set -e
+  rm -f "$tmp"
+  if [ "$rc" -ne 0 ]; then
+    die install-hermes fatal "install.sh exited with code $rc"
+  fi
+  emit event=done step=install-hermes ok:=true
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
   case "$cmd" in
-    detect)       cmd_detect "$@" ;;
-    ""|-h|--help) usage; exit 2 ;;
-    *)            usage; exit 2 ;;
+    detect)         cmd_detect "$@" ;;
+    install-hermes) cmd_install_hermes "$@" ;;
+    ""|-h|--help)   usage; exit 2 ;;
+    *)              usage; exit 2 ;;
   esac
 }
 
