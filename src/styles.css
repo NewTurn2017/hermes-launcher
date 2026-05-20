@@ -1,0 +1,168 @@
+:root {
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: #0f0f0f;
+  color: #eee;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.nav {
+  font-size: 13px;
+  color: #aaa;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #2a2a2a;
+}
+.step-indicator {
+  font-size: 12px;
+  color: #7c3aed;
+  margin: 12px 0;
+}
+.card {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 24px;
+}
+h3 {
+  margin: 0 0 8px;
+}
+h4 {
+  margin: 24px 0 8px;
+  font-size: 14px;
+}
+.muted {
+  color: #888;
+  margin: 0 0 16px;
+}
+.small {
+  font-size: 13px;
+}
+.placeholder {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 16px;
+  text-align: center;
+  color: #aaa;
+}
+.placeholder.left {
+  text-align: left;
+}
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.check-list.left {
+  text-align: left;
+}
+.check-row {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 12px 16px;
+  text-align: left;
+}
+.check-row.ok .check-mark {
+  color: #4ade80;
+}
+.check-row.bad .check-mark {
+  color: #f87171;
+}
+.check-mark {
+  margin-right: 8px;
+  font-weight: 700;
+}
+.log-box {
+  background: #0a0a0a;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #4ade80;
+  text-align: left;
+  white-space: pre-wrap;
+  max-height: 160px;
+  overflow: auto;
+}
+.log-box.manifest {
+  color: #ccc;
+}
+.progress-track {
+  margin-top: 16px;
+  background: #222;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 6px;
+}
+.progress-fill {
+  height: 6px;
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  transition: width 0.2s;
+}
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #eee;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+.button-row {
+  margin-top: 24px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.button-row.left {
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+.btn {
+  padding: 8px 16px;
+  background: #222;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  color: #eee;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn:hover {
+  background: #2a2a2a;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: linear-gradient(90deg, #7c3aed, #a855f7);
+  border: none;
+}
+.error-text {
+  color: #f87171;
+  margin-top: 12px;
+}
+.ok-text {
+  color: #4ade80;
+  margin-top: 12px;
+}
+.centered {
+  text-align: center;
+}
+.emoji {
+  font-size: 48px;
+}
+.links {
+  margin-top: 16px;
+  color: #666;
+}
