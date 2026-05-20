@@ -202,6 +202,23 @@ cmd_write_config() {
   emit event=done step=write-config ok:=true
 }
 
+cmd_verify() {
+  emit event=step step=verify progress:=0 msg="verifying installation"
+  if ! command -v codex >/dev/null 2>&1; then
+    die verify environment "codex not found on PATH"
+  fi
+  if ! codex --version >/dev/null 2>&1; then
+    die verify recoverable "codex --version failed"
+  fi
+  if ! codex login status >/dev/null 2>&1; then
+    die verify recoverable "codex is not logged in"
+  fi
+  if ! command -v hermes >/dev/null 2>&1 && [ ! -d "$HERMES_HOME/hermes-agent" ]; then
+    die verify environment "hermes not installed"
+  fi
+  emit event=done step=verify ok:=true
+}
+
 main() {
   local cmd="${1:-}"
   shift || true
@@ -212,6 +229,7 @@ main() {
     slack-manifest) cmd_slack_manifest "$@" ;;
     slack-verify)   cmd_slack_verify "$@" ;;
     write-config)   cmd_write_config "$@" ;;
+    verify)         cmd_verify "$@" ;;
     ""|-h|--help)   usage; exit 2 ;;
     *)              usage; exit 2 ;;
   esac
