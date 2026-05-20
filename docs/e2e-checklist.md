@@ -8,6 +8,7 @@
 - [ ] 빌드한 인스톨러(`--features app`) 또는 `cargo tauri dev --features app`
 
 ## Step 1 — 환경 점검
+- [ ] 첫 step 실행 시 번들 helper가 WSL `~/.hermes/launcher/`로 자동 스테이징됨 — `launcher-helper.sh`(실행권한 있음) + `lib/emit.py` + `lib/upsert_env.py` 생성, LF 줄바꿈 유지 (`wsl -d <distro> -- ls -l ~/.hermes/launcher ~/.hermes/launcher/lib`로 확인)
 - [ ] 앱 실행 시 자동으로 `detect` 이벤트 수신 → 체크리스트 표시
 - [ ] 인터넷/python3/wslview·cmd.exe/codex 항목이 실제 환경과 일치
 - [ ] distro 없음 시 "Ubuntu 설치하기" 노출 (있으면 `다음 →` 활성)

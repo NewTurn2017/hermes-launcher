@@ -55,16 +55,35 @@ mod commands {
     /// report an environment error so the command still compiles/runs.
     #[tauri::command]
     pub fn run_step(
+        app: tauri::AppHandle,
         subcommand: String,
         args: Vec<String>,
         on_event: tauri::ipc::Channel<crate::events::HelperEvent>,
     ) -> Result<(), String> {
         #[cfg(windows)]
         {
-            use crate::runner::{stream_events, wsl_helper_command};
+            use crate::runner::{stage_helper, stream_events, wsl_helper_command};
+            use tauri::Manager;
             let distro = WizardState::load(&crate::state::default_state_path())
                 .wsl_distro
                 .unwrap_or_default();
+
+            // Copy the bundled helper script + lib into the distro's ext4
+            // (~/.hermes/launcher/) before running it; a clean WSL has neither.
+            let helper_res_dir = app
+                .path()
+                .resource_dir()
+                .map_err(|e| e.to_string())?
+                .join("helper");
+            if let Err(detail) = stage_helper(&distro, &helper_res_dir) {
+                let _ = on_event.send(crate::events::HelperEvent::Error {
+                    step: crate::events::Step::Detect,
+                    level: crate::events::Level::Environment,
+                    detail: format!("helper staging failed: {detail}"),
+                });
+                return Err(detail);
+            }
+
             let helper = "$HOME/.hermes/launcher/launcher-helper.sh";
             let full = args.iter().fold(subcommand, |acc, a| format!("{acc} {a}"));
             let channel = on_event.clone();
@@ -81,7 +100,7 @@ mod commands {
         }
         #[cfg(not(windows))]
         {
-            let _ = args;
+            let _ = (args, &app);
             on_event
                 .send(crate::events::HelperEvent::Error {
                     step: crate::events::Step::Detect,
