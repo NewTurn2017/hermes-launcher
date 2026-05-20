@@ -1,3 +1,4 @@
+import { invoke as tauriInvoke, Channel } from "@tauri-apps/api/core";
 import type { HelperEvent } from "./types";
 
 export type EventListener = (ev: HelperEvent) => void;
@@ -22,6 +23,20 @@ export function makeMockBridge(
     async invoke<T>(cmd: string, payload?: Record<string, unknown>) {
       const handler = handlers[cmd];
       return (handler ? await handler(payload) : undefined) as T;
+    },
+  };
+}
+
+/** Real bridge backed by Tauri `invoke` + `Channel` (used in the packaged app). */
+export function makeTauriBridge(): Bridge {
+  return {
+    async runStep(subcommand, args, onEvent) {
+      const channel = new Channel<HelperEvent>();
+      channel.onmessage = (msg) => onEvent(msg);
+      await tauriInvoke("run_step", { subcommand, args, onEvent: channel });
+    },
+    invoke<T>(cmd: string, payload?: Record<string, unknown>) {
+      return tauriInvoke<T>(cmd, payload);
     },
   };
 }

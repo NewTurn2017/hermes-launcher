@@ -49,6 +49,49 @@ mod commands {
             None => KeyringStore.delete(&key),
         }
     }
+
+    /// Run a WSL helper subcommand, streaming each parsed HelperEvent to the
+    /// frontend over a Tauri Channel. WSL is Windows-only; other platforms
+    /// report an environment error so the command still compiles/runs.
+    #[tauri::command]
+    pub fn run_step(
+        subcommand: String,
+        args: Vec<String>,
+        on_event: tauri::ipc::Channel<crate::events::HelperEvent>,
+    ) -> Result<(), String> {
+        #[cfg(windows)]
+        {
+            use crate::runner::{stream_events, wsl_helper_command};
+            let distro = WizardState::load(&crate::state::default_state_path())
+                .wsl_distro
+                .unwrap_or_default();
+            let helper = "$HOME/.hermes/launcher/launcher-helper.sh";
+            let full = args.iter().fold(subcommand, |acc, a| format!("{acc} {a}"));
+            let channel = on_event.clone();
+            let mut child = wsl_helper_command(&distro, helper, &full)
+                .spawn()
+                .map_err(|e| e.to_string())?;
+            let stdout = child.stdout.take().ok_or("no stdout from helper")?;
+            stream_events(stdout, move |ev| {
+                let _ = channel.send(ev);
+            })
+            .map_err(|e| e.to_string())?;
+            let _ = child.wait();
+            Ok(())
+        }
+        #[cfg(not(windows))]
+        {
+            let _ = args;
+            on_event
+                .send(crate::events::HelperEvent::Error {
+                    step: crate::events::Step::Detect,
+                    level: crate::events::Level::Environment,
+                    detail: format!("run_step('{subcommand}') requires Windows + WSL"),
+                })
+                .map_err(|e| e.to_string())?;
+            Ok(())
+        }
+    }
 }
 
 #[cfg(feature = "app")]
@@ -57,7 +100,8 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             commands::set_step,
-            commands::save_secret
+            commands::save_secret,
+            commands::run_step
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
