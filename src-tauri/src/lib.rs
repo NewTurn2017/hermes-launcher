@@ -2,6 +2,7 @@
 //! testable with `cargo test` (no webview / Tauri runtime needed).
 
 pub mod events;
+pub mod runner;
 pub mod secrets;
 pub mod state;
 pub mod wsl;
