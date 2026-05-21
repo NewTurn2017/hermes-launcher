@@ -90,11 +90,16 @@ pub const STAGED_FILES: &[StagedFile] = &[
 /// `~/.hermes/launcher/<rel>`, creating parent dirs first (and +x for scripts).
 /// Copying via stdin keeps bytes identical (LF preserved) and sidesteps
 /// Windows→WSL path translation.
+///
+/// Deliberately quote-free with no command substitution: nested double quotes
+/// (`"$(dirname "…")"`) get mangled crossing the Rust `Command` → `wsl.exe` →
+/// bash boundary, which made bash exit 2. `rel` is a fixed, space-free path so
+/// it needs no quoting, and `mkdir -p ~/.hermes/launcher/lib` creates both the
+/// launcher dir and its `lib/` subdir in one shot.
 pub fn wsl_stage_inner_command(rel: &str, executable: bool) -> String {
-    let dest = format!("$HOME/.hermes/launcher/{rel}");
-    let mut cmd = format!("mkdir -p \"$(dirname \"{dest}\")\" && cat > \"{dest}\"");
+    let mut cmd = format!("mkdir -p ~/.hermes/launcher/lib && cat > ~/.hermes/launcher/{rel}");
     if executable {
-        cmd.push_str(&format!(" && chmod +x \"{dest}\""));
+        cmd.push_str(&format!(" && chmod +x ~/.hermes/launcher/{rel}"));
     }
     cmd
 }
@@ -204,12 +209,14 @@ mod tests {
 
     #[test]
     fn builds_stage_inner_command_for_script() {
+        // Quote-free + no command substitution: nested double quotes get mangled
+        // crossing the Rust Command -> wsl.exe -> bash boundary (bash exit 2).
         let cmd = wsl_stage_inner_command("launcher-helper.sh", true);
         assert_eq!(
             cmd,
-            "mkdir -p \"$(dirname \"$HOME/.hermes/launcher/launcher-helper.sh\")\" \
-             && cat > \"$HOME/.hermes/launcher/launcher-helper.sh\" \
-             && chmod +x \"$HOME/.hermes/launcher/launcher-helper.sh\""
+            "mkdir -p ~/.hermes/launcher/lib \
+             && cat > ~/.hermes/launcher/launcher-helper.sh \
+             && chmod +x ~/.hermes/launcher/launcher-helper.sh"
         );
     }
 
@@ -218,8 +225,7 @@ mod tests {
         let cmd = wsl_stage_inner_command("lib/emit.py", false);
         assert_eq!(
             cmd,
-            "mkdir -p \"$(dirname \"$HOME/.hermes/launcher/lib/emit.py\")\" \
-             && cat > \"$HOME/.hermes/launcher/lib/emit.py\""
+            "mkdir -p ~/.hermes/launcher/lib && cat > ~/.hermes/launcher/lib/emit.py"
         );
     }
 
