@@ -54,7 +54,26 @@ mod commands {
     /// frontend over a Tauri Channel. WSL is Windows-only; other platforms
     /// report an environment error so the command still compiles/runs.
     #[tauri::command]
-    pub fn run_step(
+    pub async fn run_step(
+        app: tauri::AppHandle,
+        subcommand: String,
+        args: Vec<String>,
+        on_event: tauri::ipc::Channel<crate::events::HelperEvent>,
+    ) -> Result<(), String> {
+        // install-hermes streams for minutes; the wsl.exe spawn + blocking
+        // stdout read must run off the webview thread or the UI freezes
+        // ("응답 없음"). spawn_blocking moves it to the blocking pool while the
+        // command still awaits completion (so the invoke promise resolves only
+        // after every event has streamed — the slack-verify flow relies on it).
+        tauri::async_runtime::spawn_blocking(move || -> Result<(), String> {
+            run_step_blocking(app, subcommand, args, on_event)
+        })
+        .await
+        .map_err(|e| e.to_string())?
+    }
+
+    /// Blocking body of [`run_step`], run on the blocking thread pool.
+    fn run_step_blocking(
         app: tauri::AppHandle,
         subcommand: String,
         args: Vec<String>,

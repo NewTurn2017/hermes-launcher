@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { initialModel, type WizardModel } from "./model";
-import { applyEvent, navigate } from "./reducer";
+import { applyEvent, canAdvance, isRunning, navigate } from "./reducer";
 
 describe("wizard reducer — events", () => {
   it("detect event fills env info and marks env ok", () => {
@@ -90,5 +90,24 @@ describe("wizard reducer — navigation", () => {
     m = navigate(m, { type: "skip" });
     expect(m.steps.slack.status).toBe("skipped");
     expect(m.active).toBe("done");
+  });
+
+  it("canAdvance only when active step is ok/skipped; isRunning during a step", () => {
+    const idle = { ...initialModel(), active: "install" as const };
+    expect(canAdvance(idle)).toBe(false);
+    expect(isRunning(idle)).toBe(false);
+
+    const running = applyEvent(idle, {
+      event: "step",
+      step: "install-hermes",
+      progress: 20,
+      msg: "cloning",
+    });
+    expect(isRunning(running)).toBe(true);
+    expect(canAdvance(running)).toBe(false); // still running → can't advance
+
+    const done = applyEvent(running, { event: "done", step: "install-hermes", ok: true });
+    expect(canAdvance(done)).toBe(true);
+    expect(isRunning(done)).toBe(false);
   });
 });

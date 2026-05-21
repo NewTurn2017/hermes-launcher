@@ -71,6 +71,16 @@ export type NavAction = { type: "next" } | { type: "back" } | { type: "skip" };
 
 const COMPLETE = new Set(["ok", "skipped"]);
 
+/** Whether the active step is finished, so "다음" may advance. */
+export function canAdvance(model: WizardModel): boolean {
+  return COMPLETE.has(model.steps[model.active].status);
+}
+
+/** Whether the active step is mid-run — used to block navigating away. */
+export function isRunning(model: WizardModel): boolean {
+  return model.steps[model.active].status === "running";
+}
+
 export function navigate(model: WizardModel, action: NavAction): WizardModel {
   const idx = STEP_ORDER.indexOf(model.active);
   switch (action.type) {

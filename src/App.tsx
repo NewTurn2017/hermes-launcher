@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { initialModel, STEP_ORDER, type UiStepId } from "./wizard/model";
-import { applyEvent, navigate } from "./wizard/reducer";
+import { applyEvent, canAdvance, isRunning, navigate } from "./wizard/reducer";
 import { makeTauriBridge, type Bridge } from "./bridge";
 import type { HelperEvent } from "./types";
 import { EnvStep } from "./steps/EnvStep";
@@ -74,18 +74,27 @@ export function App({ bridge }: { bridge?: Bridge }) {
       </div>
       <div className="button-row">
         {model.active !== "env" && model.active !== "done" && (
-          <button className="btn" onClick={() => setModel(navigate(model, { type: "back" }))}>
+          <button
+            className="btn"
+            disabled={isRunning(model)}
+            onClick={() => setModel(navigate(model, { type: "back" }))}
+          >
             ← 뒤로
           </button>
         )}
         {model.active === "slack" && (
-          <button className="btn" onClick={() => setModel(navigate(model, { type: "skip" }))}>
+          <button
+            className="btn"
+            disabled={isRunning(model)}
+            onClick={() => setModel(navigate(model, { type: "skip" }))}
+          >
             건너뛰기
           </button>
         )}
         {model.active !== "done" && (
           <button
             className="btn primary"
+            disabled={!canAdvance(model)}
             onClick={() => {
               const next = navigate(model, { type: "next" });
               setModel(next);
@@ -93,7 +102,7 @@ export function App({ bridge }: { bridge?: Bridge }) {
               if (model.active === "codex" && next.active === "slack") void runStep("slack-manifest");
             }}
           >
-            다음 →
+            {isRunning(model) ? "진행 중…" : "다음 →"}
           </button>
         )}
       </div>
