@@ -13,7 +13,7 @@ teardown() { teardown_common; }
 
 @test "validator accepts all confirmed event types" {
   cat > "$TMP/ev.jsonl" <<'EOF'
-{"event":"detect","internet":true,"python3":true,"wslview":false,"cmd_exe":true,"hermes_installed":false,"codex_installed":true,"codex_authed":false}
+{"event":"detect","internet":true,"python3":true,"wslview":false,"cmd_exe":true,"hermes_installed":false,"hpk_installed":true,"codex_installed":true,"codex_authed":false}
 {"event":"step","step":"verify","progress":0,"msg":"verifying"}
 {"event":"codex_authed","email":"user@example.com"}
 {"event":"codex_authed","email":null}

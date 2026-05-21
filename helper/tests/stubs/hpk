@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Stub hpk CLI for launcher helper tests.
+set -u
+cmd="${1:-}"
+shift || true
+case "$cmd" in
+  setup)
+    profile="${1:-}"
+    shift || true
+    [ "$profile" = "seb" ] || exit 40
+    mkdir -p "$HERMES_HOME/profiles/seb"
+    envf="$HERMES_HOME/profiles/seb/.env"
+    : > "$envf"
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --token)
+          printf '%s\n' "${2:-}" >> "$envf"
+          shift 2 ;;
+        --non-interactive|--skip-plugins)
+          shift ;;
+        *) shift ;;
+      esac
+    done
+    exit 0 ;;
+  doctor)
+    echo '{"hermes":{"found":true}}'
+    exit 0 ;;
+  *) exit 0 ;;
+esac

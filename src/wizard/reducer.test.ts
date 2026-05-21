@@ -11,6 +11,7 @@ describe("wizard reducer — events", () => {
       wslview: true,
       cmd_exe: true,
       hermes_installed: false,
+      hpk_installed: true,
       codex_installed: true,
       codex_authed: false,
     });
@@ -70,6 +71,7 @@ describe("wizard reducer — navigation", () => {
       wslview: true,
       cmd_exe: true,
       hermes_installed: false,
+      hpk_installed: true,
       codex_installed: true,
       codex_authed: false,
     });

@@ -21,6 +21,7 @@ fi
 : "${LAUNCHER_POLL_INTERVAL:=1}"
 : "${LAUNCHER_SLACK_API:=https://slack.com/api}"
 : "${LAUNCHER_CODEX_PROVIDER:=openai-codex}"
+: "${LAUNCHER_HPK_PACKAGE:=hermes-profile-kit}"
 
 emit() { python3 "$HELPER_DIR/lib/emit.py" "$@"; }
 
@@ -40,24 +41,26 @@ subcommands:
   codex-login                     Run `codex login`, poll auth.json, emit codex_* event
   slack-manifest                  Run `hermes slack manifest`, emit slack_manifest
   slack-verify <xoxb-token>       Verify bot token via Slack auth.test
-  write-config [--slack-bot T] [--slack-app T] [--codex]
-                                  Upsert ~/.hermes/.env tokens; optionally set codex provider
+  write-config [--slack-bot T] [--slack-signing T] [--slack-app T] [--codex]
+                                  Configure seb via hpk when available; fallback to ~/.hermes/.env
   verify                          Verify codex + hermes are usable
 EOF
 }
 
 cmd_detect() {
   local internet=false wslview=false cmd_exe=false
-  local hermes_installed=false codex_installed=false codex_authed=false
+  local hermes_installed=false codex_installed=false codex_authed=false hpk_installed=false
   if curl -fsS --max-time 5 "$LAUNCHER_NET_CHECK_URL" >/dev/null 2>&1; then internet=true; fi
   if command -v wslview >/dev/null 2>&1; then wslview=true; fi
   if command -v cmd.exe >/dev/null 2>&1; then cmd_exe=true; fi
   if command -v hermes >/dev/null 2>&1 || [ -d "$HERMES_HOME/hermes-agent" ]; then hermes_installed=true; fi
   if command -v codex >/dev/null 2>&1; then codex_installed=true; fi
+  if hpk_bin >/dev/null 2>&1; then hpk_installed=true; fi
   if [ -f "$CODEX_HOME/auth.json" ]; then codex_authed=true; fi
   emit event=detect \
     internet:="$internet" python3:=true wslview:="$wslview" cmd_exe:="$cmd_exe" \
-    hermes_installed:="$hermes_installed" codex_installed:="$codex_installed" codex_authed:="$codex_authed"
+    hermes_installed:="$hermes_installed" hpk_installed:="$hpk_installed" \
+    codex_installed:="$codex_installed" codex_authed:="$codex_authed"
 }
 
 # Map one line of install.sh stdout to a progress event (unknown lines ignored).
@@ -68,7 +71,7 @@ map_install_line() {
     *"virtual environment"*)        emit event=step step=install-hermes progress:=55 msg="creating venv" ;;
     *"Installing package"*)         emit event=step step=install-hermes progress:=70 msg="installing package" ;;
     *"config.yaml from template"*)  emit event=step step=install-hermes progress:=85 msg="writing config" ;;
-    *"Installation Complete"*)      emit event=step step=install-hermes progress:=100 msg="installation complete" ;;
+    *"Installation Complete"*)      emit event=step step=install-hermes progress:=90 msg="hermes installer complete" ;;
   esac
 }
 
@@ -89,7 +92,28 @@ cmd_install_hermes() {
   if [ "$rc" -ne 0 ]; then
     die install-hermes fatal "install.sh exited with code $rc"
   fi
+  emit event=step step=install-hermes progress:=95 msg="installing hpk"
+  if ! ensure_hpk; then
+    die install-hermes recoverable "failed to install hermes-profile-kit"
+  fi
+  emit event=step step=install-hermes progress:=100 msg="installation complete"
   emit event=done step=install-hermes ok:=true
+}
+
+hpk_bin() {
+  if command -v hpk >/dev/null 2>&1; then command -v hpk; return 0; fi
+  if [ -x "$HOME/.local/bin/hpk" ]; then printf '%s\n' "$HOME/.local/bin/hpk"; return 0; fi
+  return 1
+}
+
+ensure_hpk() {
+  hpk_bin >/dev/null 2>&1 && return 0
+  if [ -n "${LAUNCHER_HPK_INSTALL_CMD:-}" ]; then
+    bash -lc "$LAUNCHER_HPK_INSTALL_CMD"
+  else
+    python3 -m pip install --user --upgrade "$LAUNCHER_HPK_PACKAGE"
+  fi >/dev/null 2>&1
+  hpk_bin >/dev/null 2>&1
 }
 
 # Print a JSON value for the codex account email, or `null`.
@@ -180,20 +204,33 @@ cmd_slack_verify() {
 upsert_env() { python3 "$HELPER_DIR/lib/upsert_env.py" "$1" "$2" "$3"; }
 
 cmd_write_config() {
-  local bot="" app="" set_codex=false
+  local bot="" signing="" app="" set_codex=false
   while [ $# -gt 0 ]; do
     case "$1" in
       --slack-bot) bot="${2:-}"; shift 2 ;;
+      --slack-signing) signing="${2:-}"; shift 2 ;;
       --slack-app) app="${2:-}"; shift 2 ;;
       --codex)     set_codex=true; shift ;;
       *)           die write-config recoverable "unknown arg: $1" ;;
     esac
   done
   mkdir -p "$HERMES_HOME"
-  local envf="$HERMES_HOME/.env"
-  [ -f "$envf" ] || : > "$envf"
-  [ -n "$bot" ] && upsert_env "$envf" SLACK_BOT_TOKEN "$bot"
-  [ -n "$app" ] && upsert_env "$envf" SLACK_APP_TOKEN "$app"
+  if [ -n "$bot" ] || [ -n "$signing" ] || [ -n "$app" ]; then
+    if ! ensure_hpk; then
+      die write-config environment "hpk not installed and automatic install failed"
+    fi
+    if [ -z "$bot" ] || [ -z "$signing" ] || [ -z "$app" ]; then
+      die write-config recoverable "hpk setup seb requires bot, signing, and app tokens"
+    fi
+    local hpk
+    hpk="$(hpk_bin)"
+    if ! HERMES_HOME="$HERMES_HOME" "$hpk" setup seb --non-interactive --skip-plugins \
+      --token "SLACK_BOT_TOKEN=$bot" \
+      --token "SLACK_SIGNING_SECRET=$signing" \
+      --token "SLACK_APP_TOKEN=$app" >/dev/null 2>&1; then
+      die write-config recoverable "hpk setup seb failed"
+    fi
+  fi
   if [ "$set_codex" = true ]; then
     if ! hermes config set model.provider "$LAUNCHER_CODEX_PROVIDER" >/dev/null 2>&1; then
       die write-config recoverable "hermes config set model.provider failed"

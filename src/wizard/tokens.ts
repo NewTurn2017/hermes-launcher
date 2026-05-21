@@ -21,3 +21,12 @@ export function validateAppToken(token: string): TokenCheck {
   }
   return { ok: true };
 }
+
+
+export function validateSigningSecret(secret: string): TokenCheck {
+  const t = secret.trim();
+  if (!/^[a-fA-F0-9]{32}$/.test(t)) {
+    return { ok: false, reason: "Signing Secret은 32자리 hex 값이어야 합니다" };
+  }
+  return { ok: true };
+}

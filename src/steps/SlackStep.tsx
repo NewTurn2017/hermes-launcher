@@ -1,17 +1,19 @@
 import { useState } from "react";
 import type { WizardModel } from "../wizard/model";
-import { validateAppToken, validateBotToken } from "../wizard/tokens";
+import { validateAppToken, validateBotToken, validateSigningSecret } from "../wizard/tokens";
 
 export function SlackStep({
   model,
   onVerify,
 }: {
   model: WizardModel;
-  onVerify: (bot: string, app: string) => void;
+  onVerify: (bot: string, signing: string, app: string) => void;
 }) {
   const [bot, setBot] = useState("");
+  const [signing, setSigning] = useState("");
   const [app, setApp] = useState("");
   const botOk = validateBotToken(bot).ok;
+  const signingOk = validateSigningSecret(signing).ok;
   const appOk = validateAppToken(app).ok;
   return (
     <div>
@@ -39,6 +41,12 @@ export function SlackStep({
       />
       <input
         className="input"
+        placeholder="Signing Secret (32 hex)"
+        value={signing}
+        onChange={(e) => setSigning(e.target.value)}
+      />
+      <input
+        className="input"
         placeholder="App-Level Token (xapp-...)"
         value={app}
         onChange={(e) => setApp(e.target.value)}
@@ -51,8 +59,8 @@ export function SlackStep({
       <div className="button-row">
         <button
           className="btn primary"
-          disabled={!botOk || !appOk}
-          onClick={() => onVerify(bot, app)}
+          disabled={!botOk || !signingOk || !appOk}
+          onClick={() => onVerify(bot, signing, app)}
         >
           검증 후 다음 →
         </button>

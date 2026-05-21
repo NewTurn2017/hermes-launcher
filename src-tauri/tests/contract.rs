@@ -50,6 +50,7 @@ fn all_variants_serialize_to_schema_valid_json() {
             wslview: false,
             cmd_exe: true,
             hermes_installed: false,
+            hpk_installed: true,
             codex_installed: true,
             codex_authed: false,
         },

@@ -9,6 +9,7 @@ export interface DetectInfo {
   wslview: boolean;
   cmd_exe: boolean;
   hermes_installed: boolean;
+  hpk_installed: boolean;
   codex_installed: boolean;
   codex_authed: boolean;
 }

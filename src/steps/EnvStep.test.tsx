@@ -13,6 +13,7 @@ describe("EnvStep", () => {
       wslview: true,
       cmd_exe: true,
       hermes_installed: false,
+      hpk_installed: true,
       codex_installed: true,
       codex_authed: false,
     });

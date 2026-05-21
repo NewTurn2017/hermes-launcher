@@ -35,6 +35,7 @@ pub enum HelperEvent {
         wslview: bool,
         cmd_exe: bool,
         hermes_installed: bool,
+        hpk_installed: bool,
         codex_installed: bool,
         codex_authed: bool,
     },
@@ -95,7 +96,7 @@ mod tests {
 
     #[test]
     fn parses_detect_event() {
-        let line = r#"{"event":"detect","internet":true,"python3":true,"wslview":false,"cmd_exe":true,"hermes_installed":false,"codex_installed":true,"codex_authed":false}"#;
+        let line = r#"{"event":"detect","internet":true,"python3":true,"wslview":false,"cmd_exe":true,"hermes_installed":false,"codex_installed":true,"hpk_installed":true,"codex_authed":false}"#;
         let ev = parse_line(line).unwrap();
         assert!(matches!(
             ev,

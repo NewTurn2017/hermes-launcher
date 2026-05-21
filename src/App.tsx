@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { initialModel, STEP_ORDER, type UiStepId } from "./wizard/model";
 import { applyEvent, navigate } from "./wizard/reducer";
 import { makeTauriBridge, type Bridge } from "./bridge";
+import type { HelperEvent } from "./types";
 import { EnvStep } from "./steps/EnvStep";
 import { InstallStep } from "./steps/InstallStep";
 import { CodexStep } from "./steps/CodexStep";
@@ -44,10 +45,28 @@ export function App({ bridge }: { bridge?: Bridge }) {
         {model.active === "slack" && (
           <SlackStep
             model={model}
-            onVerify={(bot, app) => {
+            onVerify={(bot, signing, app) => {
               void br.invoke("save_secret", { key: "SLACK_BOT_TOKEN", value: bot });
+              void br.invoke("save_secret", { key: "SLACK_SIGNING_SECRET", value: signing });
               void br.invoke("save_secret", { key: "SLACK_APP_TOKEN", value: app });
-              void runStep("slack-verify", [bot]);
+              void (async () => {
+                const seen: HelperEvent[] = [];
+                await br.runStep("slack-verify", [bot], (ev) => {
+                  seen.push(ev);
+                  setModel((m) => applyEvent(m, ev));
+                });
+                if (seen.some((ev) => ev.event === "slack_verified")) {
+                  await runStep("write-config", [
+                    "--slack-bot",
+                    bot,
+                    "--slack-signing",
+                    signing,
+                    "--slack-app",
+                    app,
+                    "--codex",
+                  ]);
+                }
+              })();
             }}
           />
         )}

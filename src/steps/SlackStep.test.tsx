@@ -4,7 +4,7 @@ import { SlackStep } from "./SlackStep";
 import { initialModel } from "../wizard/model";
 
 describe("SlackStep", () => {
-  it("disables verify until both tokens have valid prefixes", () => {
+  it("disables verify until all Slack tokens have valid prefixes", () => {
     const onVerify = vi.fn();
     render(<SlackStep model={initialModel()} onVerify={onVerify} />);
     const verify = screen.getByRole("button", { name: /검증/ });
@@ -13,11 +13,14 @@ describe("SlackStep", () => {
     fireEvent.change(screen.getByPlaceholderText(/xoxb-/), {
       target: { value: "xoxb-123456789" },
     });
+    fireEvent.change(screen.getByPlaceholderText(/32 hex/), {
+      target: { value: "a".repeat(32) },
+    });
     fireEvent.change(screen.getByPlaceholderText(/xapp-/), {
       target: { value: "xapp-123456789" },
     });
     expect(verify).toBeEnabled();
     fireEvent.click(verify);
-    expect(onVerify).toHaveBeenCalledWith("xoxb-123456789", "xapp-123456789");
+    expect(onVerify).toHaveBeenCalledWith("xoxb-123456789", "a".repeat(32), "xapp-123456789");
   });
 });

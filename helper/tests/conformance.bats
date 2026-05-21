@@ -23,7 +23,7 @@ teardown() { teardown_common; }
   export LAUNCHER_SLACK_API="file://$FIX/slack-auth-ok"
   "$HELPER" slack-verify "xoxb-token" >> "$TMP/all.jsonl"
 
-  "$HELPER" write-config --slack-bot "xoxb-token" --slack-app "xapp-token" --codex >> "$TMP/all.jsonl"
+  "$HELPER" write-config --slack-bot "xoxb-token" --slack-signing "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" --slack-app "xapp-token" --codex >> "$TMP/all.jsonl"
   "$HELPER" verify >> "$TMP/all.jsonl"
 
   assert_valid_jsonl "$TMP/all.jsonl"

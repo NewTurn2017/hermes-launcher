@@ -36,3 +36,9 @@ teardown() { teardown_common; }
   run "$HELPER" detect
   [[ "$output" == *'"wslview":true'* ]]   # stubs dir provides wslview
 }
+
+@test "detect reports hpk_installed true when hpk is on PATH" {
+  export LAUNCHER_NET_CHECK_URL="file:///nonexistent-$$"
+  run "$HELPER" detect
+  [[ "$output" == *'"hpk_installed":true'* ]]
+}

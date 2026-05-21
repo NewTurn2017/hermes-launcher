@@ -24,10 +24,11 @@
         "wslview": { "type": "boolean" },
         "cmd_exe": { "type": "boolean" },
         "hermes_installed": { "type": "boolean" },
+        "hpk_installed": { "type": "boolean" },
         "codex_installed": { "type": "boolean" },
         "codex_authed": { "type": "boolean" }
       },
-      "required": ["event", "internet", "python3", "wslview", "cmd_exe", "hermes_installed", "codex_installed", "codex_authed"],
+      "required": ["event", "internet", "python3", "wslview", "cmd_exe", "hermes_installed", "hpk_installed", "codex_installed", "codex_authed"],
       "additionalProperties": false
     },
     {

@@ -8,7 +8,7 @@ set -u
 sub="${1:-}"
 shift || true
 case "$sub" in
-  --version) echo "hermes 1.2.3-stub"; exit 0 ;;
+  --version) echo "Hermes Agent v0.12.3"; exit 0 ;;
   slack)
     if [ "${1:-}" = "manifest" ]; then
       if [ "${STUB_HERMES_MANIFEST_FAIL:-0}" = "1" ]; then echo "manifest error" >&2; exit 1; fi

@@ -22,6 +22,7 @@ export function EnvStep({ model }: { model: WizardModel }) {
           <CheckRow ok={d.python3} label="python3 (WSL)" />
           <CheckRow ok={d.wslview || d.cmd_exe} label="WSL 브라우저 연동 (wslview/cmd.exe)" />
           <CheckRow ok={d.codex_installed} label="Codex CLI" />
+          <CheckRow ok={d.hpk_installed} label="hermes-profile-kit (hpk)" />
         </div>
       ) : env.status === "failed" ? (
         <div className="placeholder error-text">
