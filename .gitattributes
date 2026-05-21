@@ -1,0 +1,5 @@
+# The WSL-side helper and its resources run in bash; CRLF breaks the shebang
+# and `set -o pipefail`. Force LF so a Windows `git clone` (autocrlf) cannot
+# corrupt them. (run_step also strips CR when staging, as belt-and-suspenders.)
+*.sh text eol=lf
+helper/** text eol=lf

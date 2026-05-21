@@ -28,6 +28,14 @@ pub fn wsl_inner_command(helper_path: &str, subcommand: &str) -> String {
     format!("{helper_path} {subcommand}")
 }
 
+/// Drop carriage returns so a CRLF-checked-out helper (Windows `git clone`
+/// with autocrlf) is staged into WSL as LF. bash chokes on CRLF — e.g.
+/// `set -o pipefail\r` → "pipefail: invalid option name". All staged files are
+/// text (shell/python), so removing every `\r` is safe.
+pub fn strip_cr(bytes: Vec<u8>) -> Vec<u8> {
+    bytes.into_iter().filter(|&b| b != b'\r').collect()
+}
+
 /// `wsl.exe` arguments for running `bash -lc '<inner>'`. A named `distro` is
 /// targeted with `-d <distro>`; an **empty** distro (not yet selected) omits
 /// the flag so WSL uses its default distro — `wsl.exe -d "" …` is an invalid
@@ -126,8 +134,9 @@ pub fn stage_helper(distro: &str, helper_res_dir: &std::path::Path) -> Result<()
     use std::io::Write;
     for f in STAGED_FILES {
         let src = helper_res_dir.join(f.rel);
-        let bytes =
-            std::fs::read(&src).map_err(|e| format!("read resource {}: {e}", src.display()))?;
+        let bytes = strip_cr(
+            std::fs::read(&src).map_err(|e| format!("read resource {}: {e}", src.display()))?,
+        );
         let mut child = wsl_stage_command(distro, f.rel, f.executable)
             .spawn()
             .map_err(|e| format!("spawn wsl stage {}: {e}", f.rel))?;
@@ -190,6 +199,15 @@ mod tests {
     fn builds_wsl_inner_command_string() {
         let cmd = wsl_inner_command("/home/u/launcher-helper.sh", "detect");
         assert_eq!(cmd, "/home/u/launcher-helper.sh detect");
+    }
+
+    #[test]
+    fn strip_cr_turns_crlf_into_lf() {
+        assert_eq!(strip_cr(b"a\r\nb\r\n".to_vec()), b"a\nb\n".to_vec());
+        assert_eq!(
+            strip_cr(b"already\nlf\n".to_vec()),
+            b"already\nlf\n".to_vec()
+        );
     }
 
     #[test]
