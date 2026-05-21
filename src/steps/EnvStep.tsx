@@ -11,6 +11,7 @@ function CheckRow({ ok, label }: { ok: boolean; label: string }) {
 
 export function EnvStep({ model }: { model: WizardModel }) {
   const d = model.detect;
+  const env = model.steps.env;
   return (
     <div>
       <h3>시작하기 전에</h3>
@@ -21,6 +22,10 @@ export function EnvStep({ model }: { model: WizardModel }) {
           <CheckRow ok={d.python3} label="python3 (WSL)" />
           <CheckRow ok={d.wslview || d.cmd_exe} label="WSL 브라우저 연동 (wslview/cmd.exe)" />
           <CheckRow ok={d.codex_installed} label="Codex CLI" />
+        </div>
+      ) : env.status === "failed" ? (
+        <div className="placeholder error-text">
+          환경 점검에 실패했습니다: {env.error ?? "알 수 없는 오류"}
         </div>
       ) : (
         <div className="placeholder">환경을 점검하는 중…</div>

@@ -20,4 +20,16 @@ describe("EnvStep", () => {
     expect(screen.getByText(/인터넷 연결/)).toBeInTheDocument();
     expect(screen.getByText(/WSL 브라우저 연동/)).toBeInTheDocument();
   });
+
+  it("surfaces a detect error instead of hanging on the placeholder", () => {
+    const m = applyEvent(initialModel(), {
+      event: "error",
+      step: "detect",
+      level: "environment",
+      detail: "WSL distro를 찾을 수 없습니다",
+    });
+    render(<EnvStep model={m} />);
+    expect(screen.getByText(/WSL distro를 찾을 수 없습니다/)).toBeInTheDocument();
+    expect(screen.queryByText(/점검하는 중/)).not.toBeInTheDocument();
+  });
 });

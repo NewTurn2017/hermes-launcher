@@ -28,6 +28,22 @@ pub fn wsl_inner_command(helper_path: &str, subcommand: &str) -> String {
     format!("{helper_path} {subcommand}")
 }
 
+/// `wsl.exe` arguments for running `bash -lc '<inner>'`. A named `distro` is
+/// targeted with `-d <distro>`; an **empty** distro (not yet selected) omits
+/// the flag so WSL uses its default distro — `wsl.exe -d "" …` is an invalid
+/// name that exits without emitting any events.
+pub fn wsl_exec_args(distro: &str, inner: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    if !distro.is_empty() {
+        args.push("-d".to_string());
+        args.push(distro.to_string());
+    }
+    args.push("bash".to_string());
+    args.push("-lc".to_string());
+    args.push(inner.to_string());
+    args
+}
+
 /// Build the `wsl.exe -d <distro> bash -lc '<helper> <sub>'` command (Windows).
 #[cfg(windows)]
 pub fn wsl_helper_command(
@@ -36,13 +52,10 @@ pub fn wsl_helper_command(
     subcommand: &str,
 ) -> std::process::Command {
     let mut c = std::process::Command::new("wsl.exe");
-    c.args([
-        "-d",
+    c.args(wsl_exec_args(
         distro,
-        "bash",
-        "-lc",
         &wsl_inner_command(helper_path, subcommand),
-    ]);
+    ));
     c.stdout(std::process::Stdio::piped());
     c
 }
@@ -91,13 +104,10 @@ pub fn wsl_stage_inner_command(rel: &str, executable: bool) -> String {
 #[cfg(windows)]
 pub fn wsl_stage_command(distro: &str, rel: &str, executable: bool) -> std::process::Command {
     let mut c = std::process::Command::new("wsl.exe");
-    c.args([
-        "-d",
+    c.args(wsl_exec_args(
         distro,
-        "bash",
-        "-lc",
         &wsl_stage_inner_command(rel, executable),
-    ]);
+    ));
     c.stdin(std::process::Stdio::piped());
     c
 }
@@ -175,6 +185,21 @@ mod tests {
     fn builds_wsl_inner_command_string() {
         let cmd = wsl_inner_command("/home/u/launcher-helper.sh", "detect");
         assert_eq!(cmd, "/home/u/launcher-helper.sh detect");
+    }
+
+    #[test]
+    fn wsl_exec_args_target_named_distro() {
+        assert_eq!(
+            wsl_exec_args("Ubuntu-24.04", "echo hi"),
+            ["-d", "Ubuntu-24.04", "bash", "-lc", "echo hi"]
+        );
+    }
+
+    #[test]
+    fn wsl_exec_args_omit_distro_flag_when_empty() {
+        // Empty distro = not yet selected → fall back to the WSL default distro
+        // (passing `-d ""` is an invalid distro name and emits no events).
+        assert_eq!(wsl_exec_args("", "echo hi"), ["bash", "-lc", "echo hi"]);
     }
 
     #[test]
